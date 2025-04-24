@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Tasa de Café</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            text-align: center;
+        }
+        h1 { color: #333; }
+        h2 { color: #555; font-size: 1rem; margin-top: -10px; }
+
+        .official-values {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .official-values div {
+            background: #f4f4f9;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            width: 48%;
+        }
+        .official-values h3 {
+            margin: 0;
+            font-size: 1rem;
+            color: #333;
+        }
+        .official-values p {
+            margin: 5px 0;
+            font-size: 0.9rem;
+            color: #555;
+        }
+        .official-values button {
+            padding: 5px 10px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .rate-display {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #007BFF;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .manual-inputs, .conversion-section {
+            margin-bottom: 20px;
+        }
+        .manual-inputs label,
+        .conversion-section label {
+            margin-right: 10px;
+        }
+        .manual-inputs input,
+        .conversion-section input {
+            width: 150px;
+            padding: 5px;
+            margin-right: 10px;
+        }
+        .loading {
+            text-align: center;
+            color: #007BFF;
+            margin-top: 20px;
+        }
+        .export-buttons {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .export-buttons button {
+            padding: 10px 20px;
+            margin: 0 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .export-buttons .copy { background-color: #28A745; color: white; }
+        .export-buttons .reset { background-color: #DC3545; color: white; }
+        .conversion-result {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #007BFF;
+            text-align: center;
+            margin-top: 10px;
+        }
+        .context-info {
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        @media (max-width: 600px) {
+            .rate-display { font-size: 1.5rem; }
+            .official-values { flex-direction: column; }
+            .official-values div { width: 100%; margin-bottom: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>La Tasa de Café</h1>
+        <h2>Tasa del Bolívar/Peso Colombiano</h2>
+
+        <div class="official-values">
+            <div>
+                <h3>USD/VES</h3>
+                <p id="official-usd-ves">Valor oficial: No disponible</p>
+                <p id="last-update-ves">Última actualización: No disponible</p>
+                <button onclick="insertOfficialValue('VES')">Usar Otro Valor</button>
+            </div>
+            <div>
+                <h3>USD/COP</h3>
+                <p id="official-usd-cop">Valor oficial: No disponible</p>
+                <p id="last-update-cop">Última actualización: No disponible</p>
+                <button onclick="insertOfficialValue('COP')">Usar Otro Valor</button>
+            </div>
+        </div>
+
+        <div class="rate-display" id="rate-display">Cargando...</div>
+
+        <div class="manual-inputs" id="manual-inputs">
+            <label for="usd-ves">USD/VES:</label>
+            <input type="text" id="usd-ves" placeholder="Ej. 90,00">
+            <label for="usd-cop">USD/COP:</label>
+            <input type="text" id="usd-cop" placeholder="Ej. 4.000,00">
+            <button onclick="calculateManual()">Calcular</button>
+        </div>
+
+        <div class="loading" id="loading">Cargando datos...</div>
+
+        <div class="export-buttons">
+            <button class="copy" onclick="copyRate()">Copiar Tasa</button>
+            <button class="reset" onclick="resetApp()">Reiniciar</button>
+            <button onclick="refreshData()">Actualizar</button>
+        </div>
+
+        <div class="conversion-section">
+            <h3>Conversión de Monedas</h3>
+            <div>
+                <label for="ves-to-cop">Bolívares a Pesos:</label>
+                <input type="text" id="ves-to-cop" placeholder="Cantidad en VES">
+                <button onclick="convertVesToCop()">Convertir</button>
+                <div class="conversion-result" id="ves-to-cop-result"></div>
+            </div>
+            <div style="margin-top: 10px;">
+                <label for="cop-to-ves">Pesos a Bolívares:</label>
+                <input type="text" id="cop-to-ves" placeholder="Cantidad en COP">
+                <button onclick="convertCopToVes()">Convertir</button>
+                <div class="conversion-result" id="cop-to-ves-result"></div>
+            </div>
+        </div>
+
+        <div class="context-info">
+            <h2>Información Contextual</h2>
+            <p><strong>Bolívar Venezolano (VES):</strong> Moneda oficial de Venezuela.</p>
+            <p><strong>Peso Colombiano (COP):</strong> Moneda oficial de Colombia.</p>
+            <p><strong>Dólar Estadounidense (USD):</strong> Moneda utilizada como referencia para el cálculo.</p>
+            <p><strong>Fuente:</strong> openexchangerates.org</p>
+        </div>
+    </div>
+
+    <script>
+        function formatNumber(value) {
+            return new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+        }
+
+        function parseFormattedNumber(value) {
+            return parseFloat(value.replace(/\./g, '').replace(',', '.'));
+        }
+
+        let lastUsdVes = localStorage.getItem('lastUsdVes');
+        let lastUsdCop = localStorage.getItem('lastUsdCop');
+
+        window.onload = () => {
+            if (lastUsdVes && lastUsdCop) {
+                updateUI(parseFloat(lastUsdVes), parseFloat(lastUsdCop));
+            } else {
+                refreshData();
+            }
+        };
+
+        function fetchExchangeRates() {
+            const appId = '4c9382a3f4404c95a24dc81217e67629';
+            const apiUrl = `https://openexchangerates.org/api/latest.json?app_id=${appId}&symbols=VES,COP`;
+
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('manual-inputs').style.display = 'none';
+
+            fetch(apiUrl)
+                .then(res => res.json())
+                .then(data => {
+                    const usdVes = data.rates.VES;
+                    const usdCop = data.rates.COP;
+
+                    updateUI(usdVes, usdCop);
+
+                    document.getElementById('official-usd-ves').textContent = `Valor oficial: ${formatNumber(usdVes)}`;
+                    document.getElementById('last-update-ves').textContent = `Última actualización: ${new Date().toLocaleString()}`;
+                    document.getElementById('official-usd-cop').textContent = `Valor oficial: ${formatNumber(usdCop)}`;
+                    document.getElementById('last-update-cop').textContent = `Última actualización: ${new Date().toLocaleString()}`;
+                })
+                .catch(err => {
+                    console.error("Error al obtener tasas:", err);
+                    alert("Error al cargar las tasas de cambio. Verifica tu conexión o API.");
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('manual-inputs').style.display = 'block';
+                });
+        }
+
+        function updateUI(usdVes, usdCop) {
+            const vesCop = usdCop / usdVes;
+            document.getElementById('rate-display').textContent = `VES/COP: ${formatNumber(vesCop)}`;
+            document.getElementById('loading').style.display = 'none';
+
+            localStorage.setItem('lastUsdVes', usdVes);
+            localStorage.setItem('lastUsdCop', usdCop);
+
+            document.getElementById('usd-ves').value = formatNumber(usdVes);
+            document.getElementById('usd-cop').value = formatNumber(usdCop);
+        }
+
+        function calculateManual() {
+            const usdVes = parseFormattedNumber(document.getElementById('usd-ves').value);
+            const usdCop = parseFormattedNumber(document.getElementById('usd-cop').value);
+
+            if (!isNaN(usdVes) && !isNaN(usdCop)) {
+                updateUI(usdVes, usdCop);
+            } else {
+                alert("Por favor, ingrese valores válidos.");
+            }
+        }
+
+        function refreshData() {
+            fetchExchangeRates();
+        }
+
+        function copyRate() {
+            const rateText = document.getElementById('rate-display').textContent;
+            navigator.clipboard.writeText(rateText).then(() => {
+                alert("Tasa copiada al portapapeles.");
+            }).catch(err => {
+                console.error("Error al copiar:", err);
+            });
+        }
+
+        function resetApp() {
+            document.getElementById('usd-ves').value = '';
+            document.getElementById('usd-cop').value = '';
+            document.getElementById('ves-to-cop').value = '';
+            document.getElementById('cop-to-ves').value = '';
+            document.getElementById('rate-display').textContent = 'VES/COP: ';
+            document.getElementById('ves-to-cop-result').textContent = '';
+            document.getElementById('cop-to-ves-result').textContent = '';
+            document.getElementById('last-update-ves').textContent = 'Última actualización: No disponible';
+            document.getElementById('last-update-cop').textContent = 'Última actualización: No disponible';
+            document.getElementById('official-usd-ves').textContent = 'Valor oficial: No disponible';
+            document.getElementById('official-usd-cop').textContent = 'Valor oficial: No disponible';
+
+            localStorage.removeItem('lastUsdVes');
+            localStorage.removeItem('lastUsdCop');
+        }
+
+        function insertOfficialValue(currency) {
+            const newValue = prompt(`Ingrese el valor oficial para USD/${currency}:`, "0,00");
+            if (newValue) {
+                const parsedValue = parseFormattedNumber(newValue);
+                if (!isNaN(parsedValue)) {
+                    if (currency === 'VES') {
+                        localStorage.setItem('lastUsdVes', parsedValue);
+                        document.getElementById('official-usd-ves').textContent = `Valor oficial: ${formatNumber(parsedValue)}`;
+                        document.getElementById('last-update-ves').textContent = `Última actualización: ${new Date().toLocaleString()}`;
+                        document.getElementById('usd-ves').value = formatNumber(parsedValue);
+                    } else if (currency === 'COP') {
+                        localStorage.setItem('lastUsdCop', parsedValue);
+                        document.getElementById('official-usd-cop').textContent = `Valor oficial: ${formatNumber(parsedValue)}`;
+                        document.getElementById('last-update-cop').textContent = `Última actualización: ${new Date().toLocaleString()}`;
+                        document.getElementById('usd-cop').value = formatNumber(parsedValue);
+                    }
+                    calculateManual();
+                } else {
+                    alert("Ingrese un valor válido.");
+                }
+            }
+        }
+
+        function convertVesToCop() {
+            const vesAmount = parseFormattedNumber(document.getElementById('ves-to-cop').value);
+            const usdVes = parseFloat(localStorage.getItem('lastUsdVes'));
+            const usdCop = parseFloat(localStorage.getItem('lastUsdCop'));
+
+            if (!isNaN(vesAmount) && usdVes && usdCop) {
+                const vesCop = usdCop / usdVes;
+                const result = vesAmount * vesCop;
+                document.getElementById('ves-to-cop-result').textContent = `${formatNumber(vesAmount)} VES = ${formatNumber(result)} COP`;
+            } else {
+                alert("Ingrese una cantidad válida o cargue las tasas primero.");
+            }
+        }
+
+        function convertCopToVes() {
+            const copAmount = parseFormattedNumber(document.getElementById('cop-to-ves').value);
+            const usdVes = parseFloat(localStorage.getItem('lastUsdVes'));
+            const usdCop = parseFloat(localStorage.getItem('lastUsdCop'));
+
+            if (!isNaN(copAmount) && usdVes && usdCop) {
+                const vesCop = usdCop / usdVes;
+                const result = copAmount / vesCop;
+                document.getElementById('cop-to-ves-result').textContent = `${formatNumber(copAmount)} COP = ${formatNumber(result)} VES`;
+            } else {
+                alert("Ingrese una cantidad válida o cargue las tasas primero.");
+            }
+        }
+
+        document.getElementById('manual-inputs').style.display = 'block';
+    </script>
+</body>
+</html>
